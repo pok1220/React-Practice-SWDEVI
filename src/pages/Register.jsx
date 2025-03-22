@@ -1,16 +1,34 @@
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
+import {useNavigate} from 'react-router-dom'
 import {toast} from 'react-toastify'
 import {FaUser} from 'react-icons/fa'
+import {useSelector, useDispatch} from 'react-redux'
+import {register, reset} from '../features/auth/authSlice'
 
 export default function Register(){
     const [formData,setFormData]=useState({
         name:"",
         email:"",
         password:"",
-        password2:""
+        password2:"",
+        role:"user"
     });
 
-    const {name,email,password,password2}=formData;
+    const {name,email,password,password2,role}=formData;
+    const dispatch = useDispatch()
+    const navigate=useNavigate() //ไว้เปลี่ยนหน้า ?
+    const {user,isLoading, isError, isSuccess,message}=useSelector((state)=>{return state.auth})
+    useEffect(()=>{
+        if(isError){
+        toast.error(message)
+        }
+        //redirect when logged in
+        if(isSuccess || user){
+            navigate('/')
+        }
+        dispatch(reset())
+    },[isError, isSuccess, user, message, navigate, dispatch])
+
     const onChange = (e) =>{
         setFormData((prevState)=>({
         ...prevState,
@@ -21,7 +39,15 @@ export default function Register(){
         e.preventDefault()
         if(password!==password2){
             toast.error('Passwords do not match')
+        } else {
+            const userData ={
+                name,
+                email,
+                password,
+                role
             }
+            dispatch(register(userData))
+        }
     }
     return(
         <>
@@ -48,6 +74,11 @@ export default function Register(){
                     <div className='form-group'>
                         <input type="password" className="form-control" id="password2" name="password2" value={password2}
                         onChange={onChange} placeholder="Confirm Your password" required/>
+                    </div>
+                    <div className="form-group">
+                        <input type="text" className='form-control'
+                        id='role' name='role' value={role} onChange={onChange}
+                        placeholder='Enter Your Role' required/>
                     </div>
                     <div className='form-group'>
                         <button className='btn btnblock'>Submit</button>
